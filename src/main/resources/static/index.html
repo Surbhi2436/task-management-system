@@ -2,60 +2,289 @@
 <html>
 <head>
     <title>Task Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .add-task {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .add-task input, .add-task button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        .add-task input {
+            flex: 1;
+            min-width: 150px;
+        }
+        .add-task button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .add-task button:hover {
+            transform: scale(1.02);
+            background: #5a67d8;
+        }
+        .task-item {
+            background: #f7f7f7;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .task-item.completed {
+            background: #e0ffe0;
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .task-due {
+            font-size: 12px;
+            color: #666;
+        }
+        .task-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status-pending {
+            background: #ffe0b3;
+            color: #cc7000;
+        }
+        .status-completed {
+            background: #b3ffb3;
+            color: #008000;
+        }
+        .task-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .task-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .complete-btn { background: #28a745; color: white; }
+        .complete-btn:hover { background: #218838; }
+        .delete-btn { background: #dc3545; color: white; }
+        .delete-btn:hover { background: #c82333; }
+        .edit-btn { background: #ffc107; color: #333; }
+        .edit-btn:hover { background: #e0a800; }
+        .reminder-badge {
+            background: #ff4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        h2 {
+            margin: 20px 0 15px 0;
+            color: #555;
+        }
+        .empty-msg {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Task Management System</h1>
-    
-    <h2>Add New Task</h2>
-    <input type="text" id="title" placeholder="Task title">
-    <input type="date" id="dueDate">
-    <input type="time" id="dueTime">
-    <button onclick="addTask()">Add Task</button>
-    
-    <h2>All Tasks</h2>
-    <ul id="taskList"></ul>
+    <div class="container">
+        <h1>✅ Task Manager</h1>
+        
+        <div class="add-task">
+            <input type="text" id="title" placeholder="Task title...">
+            <input type="date" id="dueDate">
+            <input type="time" id="dueTime">
+            <button onclick="addTask()">+ Add Task</button>
+        </div>
+        
+        <h2>📋 Pending Tasks</h2>
+        <div id="pendingTasks"></div>
+        
+        <h2>✔️ Completed Tasks</h2>
+        <div id="completedTasks"></div>
+    </div>
     
     <script>
-        function loadTasks() {
-            fetch('/tasks')
-                .then(res => res.json())
-                .then(tasks => {
-                    const list = document.getElementById('taskList');
-                    list.innerHTML = '';
-                    tasks.forEach(task => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `${task.title} - Due: ${task.dueDate} ${task.dueTime} - ${task.status}
-                            <button onclick="completeTask(${task.id})">Complete</button>
-                            <button onclick="deleteTask(${task.id})">Delete</button>`;
-                        list.appendChild(li);
-                    });
+        const API = '';
+        
+        function formatDateTime(date, time) {
+            return `${date} at ${time}`;
+        }
+        
+        function isDueSoon(dueDate, dueTime) {
+            const taskTime = new Date(`${dueDate}T${dueTime}`).getTime();
+            const now = new Date().getTime();
+            const hoursDiff = (taskTime - now) / (1000 * 3600);
+            return hoursDiff > 0 && hoursDiff <= 2;
+        }
+        
+        async function loadTasks() {
+            try {
+                const res = await fetch('/tasks');
+                const tasks = await res.json();
+                
+                const pendingDiv = document.getElementById('pendingTasks');
+                const completedDiv = document.getElementById('completedTasks');
+                
+                const pending = tasks.filter(t => t.status === 'pending');
+                const completed = tasks.filter(t => t.status === 'completed');
+                
+                pendingDiv.innerHTML = pending.length === 0 ? '<div class="empty-msg">✨ No pending tasks. Add one above!</div>' : '';
+                completedDiv.innerHTML = completed.length === 0 ? '<div class="empty-msg">🎉 No completed tasks yet</div>' : '';
+                
+                pending.forEach(task => {
+                    const dueSoon = isDueSoon(task.dueDate, task.dueTime);
+                    pendingDiv.innerHTML += `
+                        <div class="task-item">
+                            <div class="task-info">
+                                <div class="task-title">
+                                    ${task.title}
+                                    ${dueSoon ? '<span class="reminder-badge">⏰ Due soon!</span>' : ''}
+                                </div>
+                                <div class="task-due">📅 Due: ${formatDateTime(task.dueDate, task.dueTime)}</div>
+                                <div><span class="task-status status-pending">⏳ Pending</span></div>
+                            </div>
+                            <div class="task-buttons">
+                                <button class="complete-btn" onclick="completeTask(${task.id})">✓ Complete</button>
+                                <button class="edit-btn" onclick="editTask(${task.id}, '${task.title}', '${task.dueDate}', '${task.dueTime}')">✎ Edit</button>
+                                <button class="delete-btn" onclick="deleteTask(${task.id})">🗑 Delete</button>
+                            </div>
+                        </div>
+                    `;
                 });
+                
+                completed.forEach(task => {
+                    completedDiv.innerHTML += `
+                        <div class="task-item completed">
+                            <div class="task-info">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-due">📅 Due: ${formatDateTime(task.dueDate, task.dueTime)}</div>
+                                <div><span class="task-status status-completed">✅ Completed</span></div>
+                            </div>
+                            <div class="task-buttons">
+                                <button class="delete-btn" onclick="deleteTask(${task.id})">🗑 Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error('Error loading tasks:', e);
+            }
         }
         
-        function addTask() {
-            const task = {
-                title: document.getElementById('title').value,
-                dueDate: document.getElementById('dueDate').value,
-                dueTime: document.getElementById('dueTime').value
-            };
-            fetch('/tasks', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(task)
-            }).then(() => loadTasks());
+        async function addTask() {
+            const title = document.getElementById('title').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const dueTime = document.getElementById('dueTime').value;
+            
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+            
+            const task = { title, dueDate, dueTime };
+            
+            try {
+                await fetch('/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(task)
+                });
+                
+                document.getElementById('title').value = '';
+                document.getElementById('dueDate').value = '';
+                document.getElementById('dueTime').value = '';
+                loadTasks();
+            } catch(e) {
+                alert('Error adding task');
+            }
         }
         
-        function completeTask(id) {
-            fetch(`/tasks/${id}/complete`, {method: 'PUT'})
-                .then(() => loadTasks());
+        async function completeTask(id) {
+            try {
+                await fetch(`/tasks/${id}/complete`, { method: 'PUT' });
+                loadTasks();
+            } catch(e) {
+                alert('Error completing task');
+            }
         }
         
-        function deleteTask(id) {
-            fetch(`/tasks/${id}`, {method: 'DELETE'})
-                .then(() => loadTasks());
+        async function editTask(id, oldTitle, oldDate, oldTime) {
+            const newTitle = prompt('Edit task title:', oldTitle);
+            if (!newTitle) return;
+            
+            const newDate = prompt('Edit due date (YYYY-MM-DD):', oldDate);
+            const newTime = prompt('Edit due time (HH:MM):', oldTime);
+            
+            const updated = { title: newTitle, dueDate: newDate, dueTime: newTime };
+            
+            try {
+                await fetch(`/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                });
+                loadTasks();
+            } catch(e) {
+                alert('Error editing task');
+            }
         }
         
+        async function deleteTask(id) {
+            if (confirm('Delete this task?')) {
+                try {
+                    await fetch(`/tasks/${id}`, { method: 'DELETE' });
+                    loadTasks();
+                } catch(e) {
+                    alert('Error deleting task');
+                }
+            }
+        }
+        
+        // Refresh every 30 seconds
         loadTasks();
+        setInterval(loadTasks, 30000);
     </script>
 </body>
 </html>
