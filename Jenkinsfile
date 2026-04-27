@@ -1,15 +1,20 @@
 pipeline {
     agent any
     
+    tools {
+        maven 'Maven-3'
+        jdk 'JDK-11'
+    }
+    
     environment {
         DOCKER_IMAGE = 'surbhi2436/task-manager'
     }
     
     stages {
-        stage('Submitted by: SURBHI') {
+        stage('Submitted by: SURBHI & RIMSHA') {
             steps {
                 echo '========================================='
-                echo 'Student: SURBHI'
+                echo 'Students: SURBHI & RIMSHA'
                 echo 'Topic: Task Management System'
                 echo 'Project: DevOps CI/CD Pipeline'
                 echo 'Date: 2026-04-27'
