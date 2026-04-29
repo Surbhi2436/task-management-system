@@ -1,0 +1,41 @@
+---
+- name: Deploy Task Manager to Kubernetes
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Apply Kubernetes deployment
+      command: kubectl apply -f k8s/deployment.yaml
+    
+    - name: Apply Kubernetes service
+      command: kubectl apply -f k8s/service.yaml
+    
+    - name: Wait for pods to be ready
+      command: kubectl wait --for=condition=ready pod -l app=task-manager --timeout=60s
+      ignore_errors: yes
+    
+    - name: Get pods status
+      command: kubectl get pods
+      register: pods
+    
+    - name: Get services status
+      command: kubectl get services
+      register: services
+    
+    - name: Show pods
+      debug:
+        msg: "{{ pods.stdout_lines }}"
+    
+    - name: Show services
+      debug:
+        msg: "{{ services.stdout_lines }}"
+    
+    - name: Get minikube service URL
+      command: minikube service task-manager-service --url
+      register: service_url
+      ignore_errors: yes
+    
+    - name: Display access URL
+      debug:
+        msg: "✅ Task Manager is running at: {{ service_url.stdout }}"
+      when: service_url.stdout is defined
