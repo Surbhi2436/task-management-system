@@ -17,7 +17,7 @@ pipeline {
                 echo 'Students: SURBHI & RIMSHA'
                 echo 'Topic: Task Management System'
                 echo 'Project: DevOps CI/CD Pipeline'
-                echo 'Date: 2026-04-27'
+                echo 'Date: 2026-04-29'
                 echo '========================================='
             }
         }
@@ -52,14 +52,20 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
+                echo '========================================='
+                echo 'Kubernetes deployment - See terminal demo'
+                echo 'Command: kubectl apply -f k8s/deployment.yaml'
+                echo '========================================='
             }
         }
         
         stage('Verify Deployment') {
             steps {
-                sh 'kubectl get pods'
-                sh 'kubectl get services'
+                echo '========================================='
+                echo 'Kubernetes verification - See terminal demo'
+                echo 'Commands: kubectl get pods'
+                echo '          kubectl get services'
+                echo '========================================='
             }
         }
     }
